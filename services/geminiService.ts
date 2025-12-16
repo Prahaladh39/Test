@@ -10,7 +10,7 @@ export const searchLeadsWithAgent = async (query: string): Promise<Lead[]> => {
 
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  // UPDATED PROMPT: Requesting phone numbers
+  // UPDATED PROMPT: Requesting phone numbers and MORE leads
   const prompt = `
     Act as a B2B Lead Generation Agent. The user is searching for: "${query}".
     
@@ -18,7 +18,7 @@ export const searchLeadsWithAgent = async (query: string): Promise<Lead[]> => {
     
     INSTRUCTIONS:
     1. Search for real people and companies (e.g., browse LinkedIn summaries, company team pages).
-    2. Generate 5 distinct leads.
+    2. Generate at least 15 distinct leads.
     3. For each lead, determine:
        - Role Fit (keywords: Toxicology, Safety, Hepatic)
        - Company Funding (Series A/B vs Public)
