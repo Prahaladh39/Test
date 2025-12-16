@@ -1,0 +1,5 @@
+{
+  "name": "BioScout Agent",
+  "description": "AI-powered lead generation agent for 3D in-vitro model sales, featuring automated scoring and probability ranking.",
+  "requestFramePermissions": []
+}
