@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
-import { Lead } from '../types';
-import { calculateScore, isBioHub } from './scoringService';
+import { Lead } from "../types";
+import { calculateScore, isBioHub } from "./scoringService";
 
 export const searchLeadsWithAgent = async (query: string): Promise<Lead[]> => {
   if (!process.env.API_KEY) {
@@ -51,70 +51,95 @@ export const searchLeadsWithAgent = async (query: string): Promise<Lead[]> => {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      // model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash-exp",
       contents: prompt,
       config: {
         // ENABLE GOOGLE SEARCH GROUNDING
         // NOTE: responseMimeType and responseSchema must be REMOVED when using tools
-        tools: [{ googleSearch: {} }], 
-      }
+        tools: [{ googleSearch: {} }],
+      },
     });
 
     let text = response.text;
     if (!text) return [];
 
     // CLEANUP: Remove markdown code blocks if the model includes them
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    text = text
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
     let data;
     try {
-        data = JSON.parse(text);
+      data = JSON.parse(text);
     } catch (parseError) {
-        console.error("Failed to parse AI response as JSON:", text);
-        return [];
+      console.error("Failed to parse AI response as JSON:", text);
+      return [];
     }
 
     const rawLeads = data.leads || [];
 
     return rawLeads.map((raw: any, index: number) => {
-        const isHub = isBioHub(raw.location_person) || isBioHub(raw.location_hq);
-        const isRemote = raw.location_person !== raw.location_hq;
-        
-        // Calculate Signal Scores
-        const roleFitScore = (raw.title?.includes('Toxicology') || raw.title?.includes('Safety') || raw.title?.includes('Head')) ? 30 : 10;
-        const companyIntentScore = (raw.funding_series?.includes('Series')) ? 20 : 5;
-        const technographicScore = (raw.uses_similar_tech ? 15 : 0) + 10; 
-        const locationScore = isHub ? 10 : 0;
-        const scientificScore = raw.has_recent_paper ? 40 : 0;
+      const isHub = isBioHub(raw.location_person) || isBioHub(raw.location_hq);
+      const isRemote = raw.location_person !== raw.location_hq;
 
-        const signals = {
-            roleFit: { matches: [raw.title], score: roleFitScore },
-            companyIntent: { fundingSeries: raw.funding_series || "Unknown", score: companyIntentScore },
-            technographic: { usesSimilarTech: raw.uses_similar_tech || false, openToNAMs: true, score: technographicScore },
-            location: { isHub, score: locationScore },
-            scientificIntent: { hasRecentPaper: raw.has_recent_paper, paperTopic: raw.paper_topic, score: scientificScore }
-        };
+      // Calculate Signal Scores
+      const roleFitScore =
+        raw.title?.includes("Toxicology") ||
+        raw.title?.includes("Safety") ||
+        raw.title?.includes("Head")
+          ? 30
+          : 10;
+      const companyIntentScore = raw.funding_series?.includes("Series")
+        ? 20
+        : 5;
+      const technographicScore = (raw.uses_similar_tech ? 15 : 0) + 10;
+      const locationScore = isHub ? 10 : 0;
+      const scientificScore = raw.has_recent_paper ? 40 : 0;
 
-        return {
-            id: `ai-gen-${Date.now()}-${index}`,
-            name: raw.name || "Unknown Name",
-            title: raw.title || "Unknown Title",
-            company: raw.company || "Unknown Company",
-            email: `${raw.name?.split(' ')[0]?.toLowerCase() || 'contact'}@${raw.company?.split(' ')[0]?.toLowerCase() || 'company'}.com`,
-            phoneNumber: raw.phone_number || "Not Available",
-            linkedIn: `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(raw.name + " " + raw.company)}`,
-            location: {
-                person: raw.location_person || "Unknown",
-                hq: raw.location_hq || "Unknown",
-                isRemote
-            },
-            signals,
-            score: calculateScore(signals),
-            status: 'New',
-            source: 'AI-Live'
-        } as Lead;
+      const signals = {
+        roleFit: { matches: [raw.title], score: roleFitScore },
+        companyIntent: {
+          fundingSeries: raw.funding_series || "Unknown",
+          score: companyIntentScore,
+        },
+        technographic: {
+          usesSimilarTech: raw.uses_similar_tech || false,
+          openToNAMs: true,
+          score: technographicScore,
+        },
+        location: { isHub, score: locationScore },
+        scientificIntent: {
+          hasRecentPaper: raw.has_recent_paper,
+          paperTopic: raw.paper_topic,
+          score: scientificScore,
+        },
+      };
+
+      return {
+        id: `ai-gen-${Date.now()}-${index}`,
+        name: raw.name || "Unknown Name",
+        title: raw.title || "Unknown Title",
+        company: raw.company || "Unknown Company",
+        email: `${raw.name?.split(" ")[0]?.toLowerCase() || "contact"}@${
+          raw.company?.split(" ")[0]?.toLowerCase() || "company"
+        }.com`,
+        phoneNumber: raw.phone_number || "Not Available",
+        linkedIn: `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(
+          raw.name + " " + raw.company
+        )}`,
+        location: {
+          person: raw.location_person || "Unknown",
+          hq: raw.location_hq || "Unknown",
+          isRemote,
+        },
+        signals,
+        score: calculateScore(signals),
+        status: "New",
+        source: "AI-Live",
+      } as Lead;
     });
-
   } catch (e) {
     console.error("AI Search failed", e);
     // Return empty array so App.tsx can handle fallback
