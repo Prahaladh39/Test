@@ -34,7 +34,9 @@ export function Navigation() {
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileOpen]);
 
   return (
@@ -54,7 +56,7 @@ export function Navigation() {
           <div className="flex items-center justify-between gap-4 h-16 lg:h-20">
             <Link href="/" data-testid="link-logo">
               <span className="text-xl font-bold tracking-tight text-foreground">
-                devstudio<span className="text-primary">.</span>
+                VegaDevs<span className="text-primary">.</span>
               </span>
             </Link>
 
@@ -67,14 +69,18 @@ export function Navigation() {
                         ? "text-foreground"
                         : "text-muted-foreground"
                     }`}
-                    data-testid={`link-nav-${link.label.toLowerCase().replace(/\s+/g, '-')}`}
+                    data-testid={`link-nav-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
                   >
                     {link.label}
                     {location === link.href && (
                       <motion.div
                         layoutId="nav-indicator"
                         className="absolute bottom-0 left-4 right-4 h-[2px] bg-primary rounded-full"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 380,
+                          damping: 30,
+                        }}
                       />
                     )}
                   </span>
@@ -145,7 +151,7 @@ export function Navigation() {
                             ? "text-foreground"
                             : "text-muted-foreground"
                         }`}
-                        data-testid={`link-mobile-${link.label.toLowerCase().replace(/\s+/g, '-')}`}
+                        data-testid={`link-mobile-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
                       >
                         {link.label}
                       </span>
